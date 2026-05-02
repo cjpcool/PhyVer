@@ -1,8 +1,18 @@
-# PhyVer
+<div align="center">
 
-**Authors:** Jianpeng Chen and collaborators
-**Institution:** Zhou Lab, Virginia Tech
-**ACL Demo 2026**
+# `PhyVer`: Physics-Grounded Verification of Natural-Language Materials Claims
+
+**Jianpeng Chen\*¹**, **Wangzhi Zhan\*¹**, **Haohui Wang¹**, **Brian Mayer¹**, **Dongqi Fu²**, **Dawei Zhou¹**
+
+¹ Virginia Tech, ² Meta AI
+
+<p>
+  <img src="web_demo/logo.png" alt="PhyVer" width="80%">
+</p>
+
+</div>
+
+---
 
 PhyVer is a physics-grounded verification system for natural-language materials claims. Given a claim, PhyVer generates a candidate material structure, optimizes it with a machine-learned force field, optionally runs DFT characterization, and checks whether the computed evidence supports the claim.
 
