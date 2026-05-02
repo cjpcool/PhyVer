@@ -221,7 +221,7 @@ def write_confusion_csv(path: Path, confusion: Dict[int, Dict[int, int]]) -> Non
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Run LLM-only Likert claim verification and compare with gold labels.")
-    ap.add_argument("--gold-jsonl", default="./sprint1-drop4-gold-standards.jsonl")
+    ap.add_argument("--gold-jsonl", required=True, help="Path to a gold JSONL evaluation file.")
     ap.add_argument("--outdir", default=None, help="Output directory. Default: ./artifacts/batch_runs/llm_eval_<timestamp>")
     ap.add_argument("--model", default="gpt-5.1")
     ap.add_argument("--api-key", default=None)

@@ -647,7 +647,7 @@ def _is_record_completed(rec: Optional[Dict[str, Any]], require_dft: bool) -> bo
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Batch run PhyVer pipeline and evaluate Likert scores against gold labels.")
-    ap.add_argument("--gold-jsonl", default="./sprint1-drop4-gold-standards.jsonl")
+    ap.add_argument("--gold-jsonl", required=True, help="Path to a gold JSONL evaluation file.")
     ap.add_argument("--outdir", default=None, help="Default: ./artifacts/batch_runs/phyver_eval_<timestamp>")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--start-index", type=int, default=0)

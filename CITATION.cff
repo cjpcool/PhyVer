@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use PhyVer, please cite the ACL Demo 2026 paper included in this repository as ACL_Demo_2026___PhyVer.pdf."
+message: "If you use PhyVer, please cite the ACL Demo 2026 paper."
 title: "PhyVer: Physics-Grounded Verification of Natural-Language Materials Claims"
 type: software
 date-released: "2026-05-02"

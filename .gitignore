@@ -57,15 +57,6 @@ server_nohup
 # Runtime artifacts for PhyVer demo/training/evaluation
 # -----------------------------
 artifacts/*
-!artifacts/README.md
-!artifacts/generated/
-!artifacts/generated/.gitkeep
-!artifacts/mdopt/
-!artifacts/mdopt/.gitkeep
-!artifacts/batch_runs/
-!artifacts/batch_runs/.gitkeep
-!artifacts/results/
-!artifacts/results/.gitkeep
 
 # Legacy runtime output paths retained for backward compatibility
 /_gens/
@@ -78,8 +69,6 @@ artifacts/*
 # Checkpoints and large model/data files
 # -----------------------------
 checkpoints/*
-!checkpoints/README.md
-!checkpoints/.gitkeep
 *.pt
 *.pth
 *.ckpt
@@ -132,17 +121,3 @@ dft_results.json
 *.avi
 *.webm
 !web_demo/logo.png
-!image-1.png
-
-# -----------------------------
-# Project data/code intentionally tracked
-# -----------------------------
-!sprint1-drop4-problems.jsonl
-!sprint1-drop4-gold-standards.jsonl
-!metamaterial_design_prompts.csv
-!run_modal_agent.py
-!train_ae.py
-!train_predictor.py
-!evaluation.py
-!batch_claim_pipeline.py
-!baselines/

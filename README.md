@@ -1,237 +1,90 @@
 # PhyVer
 
-PhyVer is a physics-grounded verification system for natural-language materials claims. It converts a user claim into a candidate material structure, optimizes the structure with a machine-learned force field, optionally characterizes it with density functional theory (DFT), and then verifies whether the computed evidence supports the original claim.
+**Authors:** Jianpeng Chen and collaborators
+**Institution:** Zhou Lab, Virginia Tech
+**ACL Demo 2026**
 
-The camera-ready paper is included as `ACL_Demo_2026___PhyVer.pdf`.
+PhyVer is a physics-grounded verification system for natural-language materials claims. Given a claim, PhyVer generates a candidate material structure, optimizes it with a machine-learned force field, optionally runs DFT characterization, and checks whether the computed evidence supports the claim.
 
-## Overview
-
-PhyVer is designed for interactive scientific claim checking. Given a claim such as:
-
-```text
-Al20Zn80 at 870K is a solid at equilibrium and a semiconductor with a band gap around 0.3 eV.
-```
-
-the system runs the following pipeline:
-
-1. **Claim-to-structure generation**
-   - Extracts material entities, conditions, and requested properties from the claim.
-   - Produces an initial crystal/material structure using the R_MetaSymbO generation stack or an offline prototype scaffold.
-
-2. **Structure relaxation**
-   - Converts the generated structure to an ASE `Atoms` object.
-   - Runs an anneal, quench, and 0 K relaxation loop with a Fairchem/UMA calculator.
-   - Falls back to ASE EMT when configured and UMA is unavailable.
-
-3. **DFT characterization**
-   - Runs optional ORCA single-point DFT on the optimized structure.
-   - Extracts energy, dipole, HOMO/LUMO values, band gap, and forces.
-
-4. **Claim verification**
-   - Compares the original claim against the generated structure and DFT outputs.
-   - Produces a verdict, Likert score, extracted constraints, and parameter-level checks.
-
-5. **Web demonstration**
-   - Provides a browser interface for step-by-step execution, visualization, log streaming, DFT inspection, and verification review.
-
-## Repository Organization
+The system pipeline is:
 
 ```text
-web_demo/                     Browser UI for the ACL demo
-server.py                     FastAPI backend used by the browser demo
-gen_test.py                   Claim-to-structure generation entrypoint
-wrap_md_uma.py                UMA/MD optimization and ORCA DFT wrapper
-claim_verification_llm.py     Claim-vs-DFT verification logic
-
-model/                        LLM/material generation agents
-modules/                      Geometric autoencoder, diffusion, backbone modules
-datasets/                     Dataset wrappers and lattice data structures
-utils/                        Materials, lattice, and LLM helpers
-visualization/                Structure and lattice visualization utilities
-structure_optim_modules/      MD optimization and trajectory analysis code
-evaluation/                   Generation and prediction evaluation utilities
-baselines/                    Baseline prompting/guidance code
-
-train_ae.py                   Autoencoder training script
-train_predictor.py            Predictor training script
-run_modal_agent.py            Agent-based generation script
-batch_claim_pipeline.py       Batch claim -> generation -> optimization pipeline
-analyze_batch_runs.py         Batch run analysis
-run_llm_likert_eval.py        LLM-based Likert evaluation
-run_phyver_batch_eval.py      PhyVer batch evaluation
-
-forcefields.yml               Conda environment specification for `mat_env`
-uma_config.yml                Optional UMA/Fairchem config
-checkpoints/README.md         Checkpoint download and layout instructions
-artifacts/README.md           Runtime output layout
+claim -> structure generation -> UMA/MD optimization -> optional ORCA DFT -> claim verification
 ```
 
-Generated outputs, local logs, W&B runs, virtual environments, and large model binaries are intentionally ignored by git. See `.gitignore`.
+The repository contains the web demo, backend API, generation/optimization/verification code, and the training and evaluation scripts used by the project.
 
-## Implementation Details
+## 1. Using The Demo
 
-The implementation keeps the demo entrypoints at the repository root so the original research scripts remain directly runnable.
-
-### Web Demo
-
-The frontend lives in `web_demo/`:
-
-```text
-web_demo/index.html
-web_demo/app.js
-web_demo/styles.css
-web_demo/logo.png
-```
-
-It uses 3Dmol.js for structure visualization and Plotly for optimization metrics. The frontend calls FastAPI endpoints in `server.py`.
-
-### Backend API
-
-`server.py` defines the demo API and job orchestration:
-
-```text
-GET  /demo
-POST /demo/step/generate
-POST /demo/step/optimize/start
-POST /demo/step/dft/start
-POST /demo/step/verify
-GET  /demo/step/jobs/{job_id}
-POST /demo/step/jobs/stop-all
-GET  /demo/structure
-GET  /demo/md-metrics
-GET  /demo/dft
-```
-
-Optimization and DFT jobs are launched asynchronously and polled by the frontend so long-running computations can stream progress logs.
-
-### Generation
-
-`gen_test.py` is the generation entrypoint. It supports:
-
-```text
-llm       LLM-based claim/entity/scaffold generation
-rocksalt  Offline prototype scaffold
-diamond   Offline prototype scaffold
-```
-
-The main model and agent code is in:
-
-```text
-model/
-modules/
-datasets/
-utils/
-visualization/
-```
-
-The generated structure is saved as `.npz` with:
-
-```text
-atom_types
-cart_coords
-lengths
-angles
-```
-
-### Optimization And DFT
-
-`wrap_md_uma.py` reads generated `.npz` structures, constructs ASE atoms, attaches a UMA/Fairchem calculator when available, and runs MD relaxation through `structure_optim_modules/`.
-
-The same wrapper can optionally run ORCA DFT and write:
-
-```text
-best.traj
-best.xyz
-best_energy.txt
-orca_sp/dft_results.json
-summary.json
-```
-
-### Verification
-
-`claim_verification_llm.py` compares claim constraints against computed evidence. It can call OpenAI or Gemini models and includes a heuristic fallback for common properties such as band gap, metallic/semiconductor/insulator claims, and dipole magnitude.
-
-### Training And Evaluation
-
-Training scripts are preserved:
-
-```text
-train_ae.py
-train_predictor.py
-run_modal_agent.py
-```
-
-Evaluation scripts are preserved:
-
-```text
-batch_claim_pipeline.py
-analyze_batch_runs.py
-run_llm_likert_eval.py
-run_phyver_batch_eval.py
-evaluation/
-baselines/
-```
-
-Detailed instructions are in:
-
-```text
-docs/RUN_DEMO.md
-docs/RUN_TRAINING.md
-docs/RUN_EVALUATION.md
-```
-
-## Reimplementation Guide
-
-To reimplement PhyVer from this source release, reproduce the four system layers below.
-
-1. **Set up the model/runtime environment**
-   - Install the `mat_env` conda environment from `forcefields.yml`.
-   - Install ORCA separately if DFT is required.
-   - Download the generation and UMA checkpoints described in `checkpoints/README.md`.
-
-2. **Reproduce generation**
-   - Use `gen_test.py` as the reference implementation.
-   - Start with offline `rocksalt` or `diamond` mode to validate structure serialization.
-   - Enable LLM mode after configuring an OpenAI or Gemini API key.
-
-3. **Reproduce physical optimization**
-   - Use `wrap_md_uma.py` as the reference implementation.
-   - Confirm that generated `.npz` structures can be converted to ASE atoms.
-   - Run UMA/MD relaxation and verify that `best.traj`, `best.xyz`, and `summary.json` are produced.
-
-4. **Reproduce verification**
-   - Use `claim_verification_llm.py` to convert DFT outputs into claim-level verdicts.
-   - Compare the returned `checks`, `extracted_constraints`, and Likert `score` against the claim.
-
-5. **Reproduce the web demo**
-   - Serve `server.py` with Uvicorn.
-   - Open `/demo` and execute the four UI steps.
-   - Inspect generated structures, optimized structures, DFT cards, and verification tables.
-
-For detailed command-level instructions, use the task-specific docs:
-
-```text
-docs/RUN_DEMO.md
-docs/RUN_TRAINING.md
-docs/RUN_EVALUATION.md
-```
-
-## Installation
-
-Create the environment from the provided conda file:
+Start the server:
 
 ```bash
-conda env create -f forcefields.yml
+conda activate mat_env
+uvicorn server:app --host 0.0.0.0 --port 5557
+```
+
+Open:
+
+```text
+http://localhost:5557/demo
+```
+
+The web demo supports four steps:
+
+1. Generate an initial material structure from a claim.
+2. Optimize the structure with UMA/MD.
+3. Run optional ORCA DFT characterization.
+4. Verify the claim against the generated structure and DFT results.
+
+For a quick smoke test without ORCA, choose:
+
+```text
+Mode: rocksalt
+No Generator: true
+Preset: sprint
+Run DFT: false
+```
+
+## 2. Environment Preparation
+
+Create and activate the conda environment:
+
+```bash
+conda create -n mat_env python=3.11
 conda activate mat_env
 ```
 
-If you manage dependencies manually, the core runtime packages are Python 3.9+, PyTorch, PyTorch Geometric, ASE, FastAPI, Uvicorn, NumPy, OpenAI or Google GenAI client libraries, and Fairchem/OCP for UMA.
+Install core packages:
 
-ORCA is optional but required for the DFT step. Install ORCA separately and expose its binary through `ORCA_COMMAND`.
+```bash
+pip install numpy scipy pandas scikit-learn tqdm matplotlib plotly
+pip install fastapi uvicorn pydantic
+pip install ase
+pip install openai google-genai
+```
 
-## Checkpoints
+Install PyTorch and PyTorch Geometric following the CUDA version on your machine. For example:
 
-Create this layout:
+```bash
+pip install torch torchvision torchaudio
+pip install torch-geometric torch-scatter torch-sparse torch-cluster torch-spline-conv
+```
+
+Install Fairchem/UMA dependencies according to the Fairchem instructions:
+
+```bash
+pip install fairchem-core
+```
+
+ORCA is optional but required for the DFT step. Install ORCA separately and set:
+
+```bash
+export ORCA_COMMAND=/path/to/orca
+```
+
+## 3. Checkpoints And Runtime Configuration
+
+Expected checkpoint layout:
 
 ```text
 checkpoints/
@@ -242,36 +95,19 @@ checkpoints/
   uma-s-1p1.pt
 ```
 
-Generation checkpoint:
+Download the R_MetaSymbO OMAT24 generation checkpoint from:
 
 ```text
-Download the R_MetaSymbO OMAT24 checkpoint from:
 https://drive.google.com/drive/folders/1JQ6-tAcz7B5CCfuJSiCyuYng-0eFO9GY?usp=sharing
-
-Place it under:
-./checkpoints/omat24_rattle2
 ```
 
-UMA checkpoint:
-
-```text
-Download `uma-s-1p1.pt` from the official UMA model repository and place it at:
+Download the UMA checkpoint from:
 
 ```text
 https://huggingface.co/facebook/UMA
 ```
 
-Expected local path:
-
-```text
-./checkpoints/uma-s-1p1.pt
-```
-
-More details are in `checkpoints/README.md`.
-
-## Environment Variables
-
-Set these before running the full demo:
+The demo uses these environment variables:
 
 ```bash
 export DEMO_CKPT_DIR=./checkpoints/omat24_rattle2
@@ -282,115 +118,85 @@ export FAIRCHEM_UMA_CONFIG=./uma_config.yml
 export ORCA_COMMAND=/path/to/orca
 ```
 
-For LLM-backed generation or verification, enter the API key in the web UI or provide it through your own deployment secret manager. Do not commit API keys.
+For LLM-based generation or verification, provide an OpenAI or Gemini API key in the web UI.
 
-## Running The ACL Demo
+## 4. Running Demo, Training, And Evaluation
 
-Start the FastAPI server:
+Run the web demo:
 
 ```bash
 uvicorn server:app --host 0.0.0.0 --port 5557
 ```
 
-Open:
+Run generation from the command line:
 
-```text
-http://localhost:5557/demo
+```bash
+python gen_test.py \
+  --no-generator \
+  --designer-client gpt-5 \
+  --api-key "$OPENAI_API_KEY" \
+  --ckpt-dir ./checkpoints/omat24_rattle2 \
+  --prompt "Al20Zn80 at 870K is a solid at equilibrium" \
+  --save-dir ./artifacts/generated
 ```
 
-The browser demo implements:
+Run UMA optimization:
 
-1. Claim-driven material generation.
-2. UMA/MLFF optimization with streamed progress logs.
-3. ORCA DFT characterization.
-4. Claim verification against generated structure and DFT outputs.
-5. Structure visualization, MD metric plots, refresh/reset controls, and stop controls.
-
-The UI supports three generation modes:
-
-```text
-llm       Uses an OpenAI/Gemini model and API key.
-rocksalt  Offline prototype scaffold.
-diamond   Offline prototype scaffold.
+```bash
+python wrap_md_uma.py \
+  --gen-path ./artifacts/generated/gen_union.npz \
+  --ckpt ./checkpoints/uma-s-1p1.pt \
+  --preset sprint \
+  --outdir ./artifacts/mdopt
 ```
 
-For a quick server/UI smoke test without ORCA, use `rocksalt` or `diamond`, set `Run DFT=false`, and use the `sprint` preset.
+Run UMA + ORCA DFT:
 
-See `docs/RUN_DEMO.md` for endpoint details and troubleshooting.
+```bash
+python wrap_md_uma.py \
+  --gen-path ./artifacts/generated/gen_union.npz \
+  --ckpt ./checkpoints/uma-s-1p1.pt \
+  --run-dft \
+  --orca-command "$ORCA_COMMAND" \
+  --nprocs 8 \
+  --maxcore 4000 \
+  --outdir ./artifacts/mdopt
+```
 
-## Training
-
-Autoencoder training:
+Run training:
 
 ```bash
 python train_ae.py
-```
-
-Predictor training:
-
-```bash
 python train_predictor.py
 ```
 
-Agent generation:
-
-```bash
-python run_modal_agent.py \
-  --save_name_ae checkpoints/vae_cond_128_beta001_dis_same_100_frac \
-  --save_dir artifacts/results/lattices
-```
-
-The training scripts expect the dataset/checkpoint paths used by the original project. Before publishing or reproducing experiments, update dataset paths in the script arguments or environment to match your local machine.
-
-See `docs/RUN_TRAINING.md`.
-
-## Evaluation
-
-Batch PhyVer evaluation:
+Run evaluation:
 
 ```bash
 python run_phyver_batch_eval.py \
-  --gold-jsonl ./sprint1-drop4-gold-standards.jsonl \
-  --outdir ./artifacts/batch_runs/phyver_eval_smoke
-```
+  --gold-jsonl /path/to/gold.jsonl \
+  --outdir ./artifacts/batch_runs/phyver_eval
 
-LLM Likert evaluation:
-
-```bash
 python run_llm_likert_eval.py \
-  --gold-jsonl ./sprint1-drop4-gold-standards.jsonl \
-  --outdir ./artifacts/batch_runs/llm_eval_smoke
+  --gold-jsonl /path/to/gold.jsonl \
+  --outdir ./artifacts/batch_runs/llm_eval
+
+python analyze_batch_runs.py --batch-root ./artifacts/batch_runs
 ```
 
-Full claim pipeline:
+Runtime outputs are written under `artifacts/` and are ignored by git.
 
-```bash
-python batch_claim_pipeline.py \
-  --jsonl ./sprint1-drop4-problems.jsonl \
-  --ckpt-gen ./checkpoints/omat24_rattle2 \
-  --uma-ckpt ./checkpoints/uma-s-1p1.pt \
-  --output-root ./artifacts/batch_runs \
-  --preset quick \
-  --limit 5
+## 5. Citation And License
+
+If you use PhyVer, please cite the ACL Demo 2026 paper associated with this repository.
+
+```bibtex
+@inproceedings{phyver2026,
+  title = {PhyVer: Physics-Grounded Verification of Natural-Language Materials Claims},
+  author = {Chen, Jianpeng and collaborators},
+  booktitle = {Proceedings of ACL Demo},
+  year = {2026}
+}
 ```
 
-See `docs/RUN_EVALUATION.md`.
-
-## Runtime Outputs
-
-Runtime outputs should be written under:
-
-```text
-artifacts/generated/      Generated `.npz` structures
-artifacts/mdopt/          UMA, trajectory, and DFT outputs
-artifacts/batch_runs/     Batch evaluation outputs
-artifacts/results/        Training/evaluation result tables
-```
-
-Legacy defaults such as `_gens/`, `_mdopt/`, `batch_runs/`, `results/`, and `wandb/` are still ignored so older commands do not pollute the release.
-
-## Artifact Policy
-
-Do not commit checkpoints, ORCA binaries, API keys, W&B runs, generated trajectories, DFT outputs, or local logs. The `.gitignore` file keeps these outputs out of the source release while preserving documentation and placeholder directories.
-
-`wrap_md_uma.py` is the active optimization and DFT wrapper used by the demo and evaluation scripts.
+This repository is released with the license in `LICENSE`. Third-party tools, checkpoints, APIs, and datasets are governed by their own licenses and terms.

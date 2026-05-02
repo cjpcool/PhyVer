@@ -31,7 +31,7 @@ JSONL Input Format:
 Usage Example:
   python batch_claim_pipeline.py \
       --api-key <API_KEY> \
-      --jsonl sprint1-drop4-problems.jsonl \
+      --jsonl /path/to/claims.jsonl \
       --ase-omat /path/to/omat24/rattled-relax \
       --ckpt-gen ./checkpoints/omat24_rattle2 \
       --uma-ckpt ./checkpoints/uma-s-1p1.pt \
@@ -288,7 +288,7 @@ def process_claim(idx: int, claim: str, args) -> Dict[str, Any]:
 
 # ---------------- CLI ----------------
 """
-python batch_claim_pipeline.py --jsonl ./sprint1-drop4-problems.jsonl --start-index 10 --no-generator  --output-root ./artifacts/batch_runs \
+python batch_claim_pipeline.py --jsonl /path/to/claims.jsonl --start-index 10 --no-generator  --output-root ./artifacts/batch_runs \
     --api-key '' \
     --designer-client gpt-5.1 \
     --ckpt-gen ./checkpoints/omat24_rattle2 \
