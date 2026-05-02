@@ -165,6 +165,7 @@ def safe_optimize_with_md_loop(atoms, calc, n_loops=5, fmax=0.03, relax_cell=Fal
         best, best_E = atoms.copy(), E0
     # write(os.path.join(outdir, 'loop_1.traj'), atoms)
     print("Starting optimization loop...")
+    write(os.path.join(outdir, f'best.traj'), atoms)
     for i in range(n_loops):
         print(f"Loop {i+1}/{n_loops}: Annealing and quenching...")
         atoms = best.copy(); atoms.calc = calc
@@ -175,7 +176,7 @@ def safe_optimize_with_md_loop(atoms, calc, n_loops=5, fmax=0.03, relax_cell=Fal
         print("Relaxing to 0 K...")
         relax_0K(atoms, fmax=fmax, relax_cell=relax_cell, logfile=os.path.join(outdir, f'relax_{i+1:02d}.log'))
         Ei = atoms.get_potential_energy(); write(os.path.join(outdir, f'loop_{i+1}.traj'), atoms)
-        
+
         print(f"Loop {i+1}/{n_loops}: Final energy = {Ei:.6f} eV (best so far: {best_E:.6f} eV)")
 
         if Ei + min_deltaE < best_E:
@@ -284,10 +285,27 @@ end""")
 
     orcablocks = "\n\n".join(blocks_list) + "\n"
 
+    # ---- Resolve ORCA executable to full pathname (required for parallel runs) ----
+    raw_orca_cmd = (orca_command or os.getenv("ORCA_COMMAND") or "orca").strip()
+    resolved_orca_cmd = raw_orca_cmd
+
+    if not os.path.isabs(resolved_orca_cmd):
+        which_cmd = shutil.which(resolved_orca_cmd)
+        if which_cmd:
+            resolved_orca_cmd = which_cmd
+        elif os.path.sep in resolved_orca_cmd:
+            resolved_orca_cmd = os.path.abspath(resolved_orca_cmd)
+
+    if not os.path.isabs(resolved_orca_cmd):
+        raise RuntimeError(
+            "ORCA command must be a full executable pathname for parallel runs. "
+            f"Got: {raw_orca_cmd!r}. Set ORCA_COMMAND=/full/path/to/orca or pass --orca-command with an absolute path."
+        )
+
     # ---- Filenames/paths and profile ----
     os.makedirs(workdir, exist_ok=True)
     label = "orca"
-    profile = OrcaProfile(command=orca_command) if orca_command else OrcaProfile()
+    profile = OrcaProfile(command=resolved_orca_cmd)
 
     # ---- Build calculator ----
     calc = ORCA(
@@ -590,7 +608,7 @@ def run_orca_dft(atoms: Atoms,
 # ---------------- Orchestrator ----------------
 
 def optimize_and_characterize(gen_path: str,
-                              outdir: str = './_mdopt',
+                              outdir: str = './artifacts/mdopt',
                               uma_ckpt: str = None,
                               uma_config_yml: str = None,
                               device: str = None,
@@ -645,20 +663,20 @@ def optimize_and_characterize(gen_path: str,
     T_final, cool_ps = 100.0, 20.0
 
     if preset == 'quick':
-        loops = min(loops, 1)
+        loops = min(loops, 5)
         T_start, T_peak, T_hold_ps = 300.0, 550.0, 2.0
         T_final, cool_ps, tstep_fs = 180.0, 5.0, 3.0   # Use 2.0 if unstable
         friction = 0.02                                 # Slightly stronger damping for faster thermostat convergence
         fmax = max(fmax, 0.08)
 
-    elif preset == 'sprint': 
-        loops = 1
+    elif preset == 'sprint':
+        loops = min(loops, 1)
         T_start, T_peak, T_hold_ps = 300.0, 500.0, 1.0
         T_final, cool_ps, tstep_fs = 200.0, 3.0, 3.0
         friction = 0.02
         fmax = max(fmax, 0.10)
 
-    elif preset == 'micro': 
+    elif preset == 'micro':
         loops = 1
         T_start, T_peak, T_hold_ps = 300.0, 320.0, 0.5  # Near isothermal, mild perturbation
         T_final, cool_ps, tstep_fs = 250.0, 1.5, 3.0
@@ -692,7 +710,7 @@ def optimize_and_characterize(gen_path: str,
     timing_records = []
     timing_records.append(('Single-Step UMA Energy', uma_elapsed))
     # print('atom pos', atoms.positions)
-    
+
     # Save UMA results
     write(os.path.join(outdir, 'best.xyz'), best_atoms)
     with open(os.path.join(outdir, 'best_energy.txt'), 'w') as f: f.write(f"{best_E:.6f}\n")
@@ -731,7 +749,7 @@ def main():
 
     ap = argparse.ArgumentParser(description='UMA optimization and ORCA single-shot DFT results extraction script.')
     ap.add_argument('--gen-path', required=True, help='generated .npz/.npy path')
-    ap.add_argument('--outdir', default='./_mdopt', help='Output dir')
+    ap.add_argument('--outdir', default='./artifacts/mdopt', help='Output dir')
 
     # UMA
     ap.add_argument('--ckpt', default=os.getenv('FAIRCHEM_UMA_CKPT'), help='UMA checkpoint path, default env FAIRCHEM_UMA_CKPT')

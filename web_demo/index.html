@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhyVer</title>
+  <link rel="stylesheet" href="/demo-assets/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.4/3Dmol-min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/demo-assets/logo.png" alt="PhyVer logo" class="brand-logo" />
+      <h1 class="sr-only">PhyVer</h1>
+    </div>
+    <p class="pipeline">Claim → Generate → Optimize → DFT → Verification</p>
+  </header>
+
+  <main>
+    <section class="panel controls">
+      <h2>Run Configuration</h2>
+      <div class="grid">
+        <label>Claim
+          <textarea id="claims" rows="3">Al20Zn80 at 870K is a solid at equilibrium and a semiconductor with a band gap around 0.3 eV.</textarea>
+        </label>
+        <label>API Key
+          <input id="api_key" type="password" placeholder="OpenAI/Gemini API key" />
+        </label>
+        <label>Model
+          <select id="model">
+            <option value="gpt-5.1" selected>gpt-5.1</option>
+            <option value="gpt-5.1-mini">gpt-5.1-mini</option>
+            <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+            <option value="o4-mini">o4-mini</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          </select>
+        </label>
+        <label>Mode
+          <select id="mode">
+            <option value="llm" selected>llm</option>
+            <option value="rocksalt">rocksalt (offline)</option>
+            <option value="diamond">diamond (offline)</option>
+          </select>
+        </label>
+        <label>No Generator
+          <select id="no_generator">
+            <option value="true" selected>true</option>
+            <option value="false">false</option>
+          </select>
+        </label>
+        <label>Device
+          <select id="device">
+            <option value="cuda">cuda</option>
+            <option value="cpu">cpu</option>
+          </select>
+        </label>
+        <label>Preset
+          <select id="preset">
+            <option value="quick">quick</option>
+            <option value="sprint" selected>sprint</option>
+            <option value="standard">standard</option>
+            <option value="thorough">thorough</option>
+          </select>
+        </label>
+        <label>Run DFT
+          <select id="run_dft">
+            <option value="true" selected>true</option>
+            <option value="false">false</option>
+          </select>
+        </label>
+        <label>Loops
+          <input id="loops" type="number" value="2" min="1" step="1" />
+        </label>
+        <label>ORCA NProcs
+          <input id="orca_nprocs" type="number" value="8" min="1" step="1" />
+        </label>
+        <label>ORCA MaxCore
+          <input id="orca_maxcore" type="number" value="4000" min="100" step="100" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="stepGenerateBtn">Step 1: Generate</button>
+        <button id="stepUmaBtn">Step 2: UMA Optimization</button>
+        <button id="stepDftBtn">Step 3: DFT Computation</button>
+        <button id="stepVerifyBtn">Step 4: Verify Claim</button>
+      </div>
+      <div class="actions">
+        <button id="runAllBtn">Run All Steps</button>
+        <button id="refreshBtn">Refresh Current Results</button>
+        <button id="stopRunBtn" class="btn-danger">Stop</button>
+      </div>
+      <div id="status">Idle.</div>
+      <div id="jobMeta"></div>
+      <div id="pathMeta"></div>
+      <div id="runState" class="run-state hidden">
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="runStateText">Running & Out</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="generated">Step 1 Initialized Material</button>
+        <button class="tab" data-tab="optimized">Step 2 MLFF (UMA) Optimized </button>
+        <button class="tab" data-tab="dft">Step 3 DFT Computation</button>
+        <button class="tab" data-tab="verify">Step 4 Claim Verification</button>
+      </div>
+
+      <div class="tab-content active" id="tab-generated">
+        <h3>Generated Structure</h3>
+        <div class="viewer-actions">
+          <button id="resetGeneratedViewBtn" type="button">Reset</button>
+        </div>
+        <div class="viewer-wrap">
+          <div id="generatedViewer" class="viewer"></div>
+        </div>
+        <pre id="generatedInfo" class="small"></pre>
+      </div>
+
+      <div class="tab-content" id="tab-optimized">
+        <h3>Optimized Structure</h3>
+        <div class="viewer-actions">
+          <button id="resetOptimizedViewBtn" type="button">Reset</button>
+        </div>
+        <div class="viewer-wrap">
+          <div id="optimizedViewer" class="viewer"></div>
+        </div>
+        <pre id="optimizedInfo" class="small"></pre>
+
+        <h3>Optimization Trajectory Metrics</h3>
+        <div id="energyPlot" class="plot"></div>
+        <div id="volumePlot" class="plot"></div>
+        <div id="rmsdPlot" class="plot"></div>
+        <h3>Optimization Progress Log</h3>
+        <pre id="optLog" class="small"></pre>
+        <pre id="mdInfo" class="small"></pre>
+      </div>
+
+      <div class="tab-content" id="tab-dft">
+        <h3>DFT Analysis</h3>
+        <div id="dftCards" class="cards"></div>
+        <pre id="dftRaw"></pre>
+      </div>
+
+      <div class="tab-content" id="tab-verify">
+        <h3>Claim Verification</h3>
+        <div id="verifySummary"></div>
+        <div id="verifyChecks"></div>
+
+        <h3>Latest API JSON</h3>
+        <pre id="rawJson"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="/demo-assets/app.js"></script>
+</body>
+</html>

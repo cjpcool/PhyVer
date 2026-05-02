@@ -1,4 +1,4 @@
-name: forcefields
+name: mat_env
 channels:
   - pytorch
   - nvidia
@@ -474,4 +474,3 @@ dependencies:
       - vtk==9.3.1
       - wandb==0.18.7
       - wheel==0.45.1
-prefix: /home/grads/jianpengc/anaconda3/envs/forcefields

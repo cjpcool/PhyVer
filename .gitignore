@@ -1,28 +1,148 @@
-/checkpoints
-/metamaterial_design_prompts.csv
-/nohup.out
-/results
-/wandb
-__pycache__/*
-*.pyc
-*.pkl
+# -----------------------------
+# Python / local environments
+# -----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+.ipynb_checkpoints/
+
+# -----------------------------
+# Build / packaging
+# -----------------------------
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# -----------------------------
+# IDE / OS local files
+# -----------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.codex
+
+# -----------------------------
+# Secrets and credentials
+# -----------------------------
+*.pem
+*.key
+*.token
+openai_api_key*
+gemini_api_key*
+api_key*
+
+# -----------------------------
+# Logs / process outputs
+# -----------------------------
 *.log
-*.ckpt
-*.h5
+*.out
+*.err
+*.nohup
+nohup.out
+server_log.nohup
+server_nohup
+
+# -----------------------------
+# Runtime artifacts for PhyVer demo/training/evaluation
+# -----------------------------
+artifacts/*
+!artifacts/README.md
+!artifacts/generated/
+!artifacts/generated/.gitkeep
+!artifacts/mdopt/
+!artifacts/mdopt/.gitkeep
+!artifacts/batch_runs/
+!artifacts/batch_runs/.gitkeep
+!artifacts/results/
+!artifacts/results/.gitkeep
+
+# Legacy runtime output paths retained for backward compatibility
+/_gens/
+/_mdopt/
+/batch_runs/
+/results/
+/wandb/
+
+# -----------------------------
+# Checkpoints and large model/data files
+# -----------------------------
+checkpoints/*
+!checkpoints/README.md
+!checkpoints/.gitkeep
 *.pt
 *.pth
+*.ckpt
+*.safetensors
+*.h5
+*.pkl
+*.joblib
 *.db
+*.sqlite
+*.sqlite3
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.npz
+*.npy
+
+# -----------------------------
+# Generated chemistry/materials outputs
+# -----------------------------
+*.traj
+*.xyz
+*.cube
+*.cif
+*.mol
+*.sdf
+*.pdb
+*.orca
+orca_sp/
+orca_calc.*
+forces.npy
+best_energy.txt
+timing_log.txt
+summary.json
+dft_results.json
+
+# -----------------------------
+# Large media generated during experiments
+# Keep source-release paper and web demo logo tracked.
+# -----------------------------
 *.jpg
-# *.png
-sprint1-drop4-problems.jsonl
-metamaterial_design_prompts.csv
-run_modal_agent.py
-train_ae.py
-train_predictor.py
-evaluation.py
-# batch_claim_pipeline.py
-.vev/
-/_mdopt
-/baselines
-/batch_runs
-/_gens
+*.jpeg
+*.tif
+*.tiff
+*.bmp
+*.gif
+*.mp4
+*.mov
+*.avi
+*.webm
+!web_demo/logo.png
+!image-1.png
+
+# -----------------------------
+# Project data/code intentionally tracked
+# -----------------------------
+!sprint1-drop4-problems.jsonl
+!sprint1-drop4-gold-standards.jsonl
+!metamaterial_design_prompts.csv
+!run_modal_agent.py
+!train_ae.py
+!train_predictor.py
+!evaluation.py
+!batch_claim_pipeline.py
+!baselines/

@@ -3,7 +3,7 @@
 Batch Runs Aggregator & Visualizer
 ==================================
 
-Scans ./batch_runs/claim_XXXX/ for:
+Scans ./artifacts/batch_runs/claim_XXXX/ for:
   - timings.json
   - mdopt/summary.json
 
@@ -12,7 +12,7 @@ Produces:
   2) UMA vs DFT comparisons (energies and any overlapping numeric properties)
   3) Distributions for each numeric property present in summary.json (by method)
 
-Outputs saved under --outdir (default: ./batch_runs/analysis_summary):
+Outputs saved under --outdir (default: ./artifacts/batch_runs/analysis_summary):
   - times.csv, times_stats.csv
   - energies.csv
   - properties_long.csv
@@ -24,8 +24,8 @@ Dependencies: pandas, numpy, matplotlib, seaborn
 
 Usage:
   python analyze_batch_runs.py \
-      --batch-root ./batch_runs \
-      --outdir ./batch_runs/analysis_summary
+      --batch-root ./artifacts/batch_runs \
+      --outdir ./artifacts/batch_runs/analysis_summary
 
 Optionally add --show to display figures interactively after saving.
 """
@@ -326,8 +326,8 @@ def plot_all(times_df, energies_df, props_df, cmp_df, energy_cmp_df, outdir: Pat
 
 def main():
     parser = argparse.ArgumentParser(description='Aggregate timings and summary.json across batch runs and visualize.')
-    parser.add_argument('--batch-root', default='./batch_runs', help='Root directory containing claim_XXXX subfolders')
-    parser.add_argument('--outdir', default='./batch_runs/analysis_summary', help='Directory to save outputs')
+    parser.add_argument('--batch-root', default='./artifacts/batch_runs', help='Root directory containing claim_XXXX subfolders')
+    parser.add_argument('--outdir', default='./artifacts/batch_runs/analysis_summary', help='Directory to save outputs')
     parser.add_argument('--show', action='store_true', help='Show plots interactively after saving')
     parser.add_argument('--save-format', default='png', choices=['png','pdf','svg'], help='Image format for plots')
     args = parser.parse_args()

@@ -1,0 +1,12 @@
+Copyright (c) 2026 PhyVer Authors.
+
+All rights reserved.
+
+This source release is provided for reviewing and reproducing the ACL Demo 2026
+PhyVer system. No permission is granted to use, copy, modify, merge, publish,
+distribute, sublicense, or sell copies of the software unless the authors provide
+a separate license.
+
+Third-party dependencies, pretrained checkpoints, model weights, datasets, and
+external tools such as ORCA, Fairchem/UMA, OpenAI APIs, and Gemini APIs are
+governed by their own licenses and terms.

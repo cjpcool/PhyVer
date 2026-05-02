@@ -177,12 +177,12 @@ def main():
     p.add_argument('--cif-dir', type=str, default=None, help='Directory of CIFs for ASE dataset.')
     p.add_argument('--ase-db', type=str, default=None, help='ASE .db file with structures.')
     p.add_argument('--ase-omat', type=str, default=None, help='omat dataset path.')
-    
+
     p.add_argument('--cutoff', type=float, default=5.0, help='Radius for neighbor graph inside OMAT24Dataset.')
     p.add_argument('--prompt', type=str, default='Rocksalt ionic conductor (NaCl-like).', help='Design requirement for Agent-1.')
     p.add_argument('--api-key', type=str, default='', help='Provide OpenAI/Gemini API key.')
     p.add_argument('--ckpt-dir', type=str, default='./checkpoints/omat24_rattle2', help='Where best_ae_model.pt lives.')
-    p.add_argument('--save-dir', type=str, default='./_gens', help='Output folder for generated npz.')
+    p.add_argument('--save-dir', type=str, default='./artifacts/generated', help='Output folder for generated npz.')
     p.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
     p.add_argument('--logic-mode', type=str, default='union', choices=['union', 'mix', 'int', 'neg'])
     p.add_argument('--no-llm', action='store_true', help='Use offline built-in scaffold (skip Agent-1 LLM).')
@@ -290,7 +290,7 @@ def main():
                  angles=angles_pred.detach().cpu().view(-1).numpy())
         print('[DONE] Saved generation to', out, f"(elapsed {elapsed:.3f}s)")
         return
-    
+
     else:
         # LLM mode: one-shot A1→A2
         print('[INFO] LLM scaffold mode. Provide API key for your selected client.')
@@ -299,7 +299,7 @@ def main():
   Entity Extraction Results:\n \
   Object: {obj},\n Conditions: {cond},\n Properties: {prop},\n Design requirements: {req}\n \
  ------------------------")
-        
+
         print('[INFO] Geting scaffold from Agent-1...')
         req_prompt = f"Generate Object {obj}, and try to satisfy the requirements: {req}"
         z, cart_coords, batch, lengths, angles, num_atoms = agent.get_scaffold(req_prompt, visualize_results=False)

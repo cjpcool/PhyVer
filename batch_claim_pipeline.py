@@ -32,11 +32,11 @@ Usage Example:
   python batch_claim_pipeline.py \
       --api-key <API_KEY> \
       --jsonl sprint1-drop4-problems.jsonl \
-      --ase-omat /home/grads/jianpengc/datasets/omat24/rattled-relax \
+      --ase-omat /path/to/omat24/rattled-relax \
       --ckpt-gen ./checkpoints/omat24_rattle2 \
       --uma-ckpt ./checkpoints/uma-s-1p1.pt \
       --orca-command ~/orca_6_1_0/orca --dft --nprocs 16 --maxcore 6000 \
-      --output-root ./batch_runs --preset quick --limit 5
+      --output-root ./artifacts/batch_runs --preset quick --limit 5
 
 Design Notes:
   • Uses subprocess for isolation; each step timed via time.time() wrapper.
@@ -172,6 +172,8 @@ def process_claim(idx: int, claim: str, args) -> Dict[str, Any]:
         gen_cmd += ['--api-key', args.api_key]
     else:
         gen_cmd += ['--api-key', '']
+    if args.designer_client:
+        gen_cmd += ['--designer-client', args.designer_client]
     if args.ase_omat:
         gen_cmd += ['--ase-omat', args.ase_omat]
     if args.no_llm:
@@ -286,8 +288,9 @@ def process_claim(idx: int, claim: str, args) -> Dict[str, Any]:
 
 # ---------------- CLI ----------------
 """
-python batch_claim_pipeline.py --jsonl ./sprint1-drop4-problems.jsonl --start-index 10 --no-generator  --output-root ./batch_runs \
+python batch_claim_pipeline.py --jsonl ./sprint1-drop4-problems.jsonl --start-index 10 --no-generator  --output-root ./artifacts/batch_runs \
     --api-key '' \
+    --designer-client gpt-5.1 \
     --ckpt-gen ./checkpoints/omat24_rattle2 \
     --uma-ckpt ./checkpoints/uma-s-1p1.pt \
     --orca-command ~/orca_6_1_0/orca --dft --nprocs 16 --maxcore 4000 \
@@ -298,7 +301,7 @@ def main():
     ap = argparse.ArgumentParser(description='Batch pipeline for claim → generation → optimization → DFT → analysis.')
     ap.add_argument('--jsonl', required=True, help='Input JSONL with claims')
     ap.add_argument('--claim-key', default='claim', help='Key for claim text in JSON lines (default: claim)')
-    ap.add_argument('--output-root', default='./batch_runs', help='Root output directory')
+    ap.add_argument('--output-root', default='./artifacts/batch_runs', help='Root output directory')
     ap.add_argument('--limit', type=int, default=None, help='Limit number of claims processed')
     ap.add_argument('--start-index', type=int, default=0, help='Start index offset for claim numbering')
     ap.add_argument('--fail-fast', action='store_true', help='Stop on first error')
@@ -306,6 +309,7 @@ def main():
     # Generation args
     ap.add_argument('--no-generator', action='store_true', help='Disable the generation step of Agent 2')
     ap.add_argument('--api-key', default='')
+    ap.add_argument('--designer-client', default=None, help='LLM model/client name passed to gen_test.py --designer-client')
     ap.add_argument('--ase-omat', default=None)
     ap.add_argument('--ckpt-gen', required=True, help='Checkpoint dir for generation model')
     ap.add_argument('--logic-mode', default='union')
