@@ -4,7 +4,7 @@
 
 **Jianpeng Chen\*¹**, **Wangzhi Zhan\*¹**, **Haohui Wang¹**, **Brian Mayer¹**, **Dongqi Fu²**, **Dawei Zhou¹**
 
-¹ Virginia Tech, ² Meta AI
+¹Virginia Tech, ²Meta AI
 
 <p>
   <img src="web_demo/logo.png" alt="PhyVer" width="80%">
@@ -86,7 +86,8 @@ Install Fairchem/UMA dependencies according to the Fairchem instructions:
 pip install fairchem-core
 ```
 
-ORCA is optional but required for the DFT step. Install ORCA separately and set:
+ORCA is optional but required for the DFT step. Install ORCA from https://brehm-research.de/orcamd.php separately and set:
+
 
 ```bash
 export ORCA_COMMAND=/path/to/orca
@@ -203,7 +204,7 @@ If you use PhyVer, please cite the ACL Demo 2026 paper associated with this repo
 ```bibtex
 @inproceedings{phyver2026,
   title = {PhyVer: Physics-Grounded Verification of Natural-Language Materials Claims},
-  author = {Chen, Jianpeng and collaborators},
+  author = {Jianpeng Chen, Wangzhi Zhan, Haohui Wang, Brian Mayer, Dongqi Fu, Dawei Zhou},
   booktitle = {Proceedings of ACL Demo},
   year = {2026}
 }
